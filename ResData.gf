@@ -2,31 +2,40 @@ resource ResData = open Prelude in {
   oper
     StrMap : Type = Str -> Str ;
     SSMap  : Type = SS -> SS ;
-    
+
     toSS : StrMap -> SSMap = \f,r -> ss (f r.s) ;
-    
+
+    --Lclose : Str -> StrMap = \sep,s -> sep ++ SOFT_BIND ++ s ;
     Lclose   : Str -> Str -> Str = \s,r -> s ++ r ;
-    Lparen   : Str -> Str = \s -> Lclose "(" s ;
-    Lbrack   : Str -> Str = \s -> Lclose "[" s ;
-    Lbrace   : Str -> Str = \s -> Lclose "{" s ;
-    ssLparen : SS -> SS = \r -> toSS Lparen r;
-    ssLbrack : SS -> SS = \r -> toSS Lbrack r ;
-    ssLbrace : SS -> SS = \r -> toSS Lbrace r ;
-
     Rclose   : Str -> Str -> Str = \s,r -> r ++ s ;
-    Rparen   : Str -> Str = \s -> Rclose ")" s ;
-    Rbrack   : Str -> Str = \s -> Rclose "]" s ;
-    Rbrace   : Str -> Str = \s -> Rclose "}" s ;
-    ssRparen : SS -> SS = \r -> toSS Rparen r ;
-    ssRbrack : SS -> SS = \r -> toSS Rbrack r ;
-    ssRbrace : SS -> SS = \r -> toSS Rbrace r ;
+    --Rclose : Str -> StrMap = \sep,s -> s ++ SOFT_BIND ++ sep ;
+    close = overload {
+      close : Str -> StrMap = \sep,s -> (Lclose sep (Rclose sep s )) ;
+      close : Str -> Str -> StrMap = \lsep,rsep,s -> (Lclose lsep (Rclose rsep )) ;
+      } ;
 
-    brack   : Str -> Str = \s -> Lbrack (Rbrack s) ;
-    brace   : Str -> Str = \s -> Lbrace (Rbrace s) ;
+    Lparen   : StrMap = \s -> Lclose "(" s ;
+    Lbrack   : StrMap = \s -> Lclose "[" s ;
+    Lbrace   : StrMap = \s -> Lclose "{" s ;
+    ssLparen : SSMap = \r -> toSS Lparen r;
+    ssLbrack : SSMap = \r -> toSS Lbrack r ;
+    ssLbrace : SSMap = \r -> toSS Lbrace r ;
+
+    Rparen   : StrMap = \s -> Rclose ")" s ;
+    Rbrack   : StrMap = \s -> Rclose "]" s ;
+    Rbrace   : StrMap = \s -> Rclose "}" s ;
+    ssRparen : SSMap = \r -> toSS Rparen r ;
+    ssRbrack : SSMap = \r -> toSS Rbrack r ;
+    ssRbrace : SSMap = \r -> toSS Rbrace r ;
+
+    brack   : StrMap = \s -> close "[" "]" s ;
+    brace   : StrMap = \s -> lose "{" "}" s ; --eta reduce?
     ssBrack : SS -> SS = \r -> toSS brack r ;
     ssBrace : SS -> SS = \r -> toSS brace r ;
     ssParen : SS -> SS = \r -> toSS paren r ;
 
-    strfy   : Str -> Str = \s -> "\"" ++ s ++ "\"" ;
+    Rcomma : Str = ","-- "," ++ SOFT_BIND
+
+    strfy   : Str -> Str = \s -> close "\"" s ;
     ssStrfy : SS -> SS = \r -> toSS strfy r ;
 } ;
