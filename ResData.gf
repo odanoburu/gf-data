@@ -1,41 +1,46 @@
-resource ResData = open Prelude in {
+resource ResData = open Prelude, Predef in {
+  -- eta reduce opers?
   oper
     StrMap : Type = Str -> Str ;
     SSMap  : Type = SS -> SS ;
 
-    toSS : StrMap -> SSMap = \f,r -> ss (f r.s) ;
+    toSS : StrMap -> SSMap = \t,r -> ss (t r.s) ;
 
-    --Lclose : Str -> StrMap = \sep,s -> sep ++ SOFT_BIND ++ s ;
-    Lclose   : Str -> Str -> Str = \s,r -> s ++ r ;
-    Rclose   : Str -> Str -> Str = \s,r -> r ++ s ;
-    --Rclose : Str -> StrMap = \sep,s -> s ++ SOFT_BIND ++ sep ;
-    close = overload {
-      close : Str -> StrMap = \sep,s -> (Lclose sep (Rclose sep s )) ;
-      close : Str -> Str -> StrMap = \lsep,rsep,s -> (Lclose lsep (Rclose rsep )) ;
-      } ;
+    rSbind : Str -> Str = \s -> s ++ SOFT_BIND ;
+    lSbind : Str -> Str = \s -> SOFT_BIND ++ s ;
 
-    Lparen   : StrMap = \s -> Lclose "(" s ;
-    Lbrack   : StrMap = \s -> Lclose "[" s ;
-    Lbrace   : StrMap = \s -> Lclose "{" s ;
-    ssLparen : SSMap = \r -> toSS Lparen r;
-    ssLbrack : SSMap = \r -> toSS Lbrack r ;
-    ssLbrace : SSMap = \r -> toSS Lbrace r ;
+    embed : Str -> Str -> StrMap = \lsep,rsep,s -> lsep ++ s ++ rsep ;
 
-    Rparen   : StrMap = \s -> Rclose ")" s ;
-    Rbrack   : StrMap = \s -> Rclose "]" s ;
-    Rbrace   : StrMap = \s -> Rclose "}" s ;
-    ssRparen : SSMap = \r -> toSS Rparen r ;
-    ssRbrack : SSMap = \r -> toSS Rbrack r ;
-    ssRbrace : SSMap = \r -> toSS Rbrace r ;
+    begParen : Str = rSbind "(" ;
+    begBrack : Str = rSbind "[" ;
+    begBrace : Str = rSbind "{" ;
+    begQuote : Str = rSbind "\"" ;
 
-    brack   : StrMap = \s -> close "[" "]" s ;
-    brace   : StrMap = \s -> lose "{" "}" s ; --eta reduce?
-    ssBrack : SS -> SS = \r -> toSS brack r ;
-    ssBrace : SS -> SS = \r -> toSS brace r ;
-    ssParen : SS -> SS = \r -> toSS paren r ;
+    ssBegParen : SSMap = prefixSS begParen ;
+    ssBegBrack : SSMap = prefixSS begBrack ;
+    ssBegBrace : SSMap = prefixSS begBrace ;
 
-    Rcomma : Str = ","-- "," ++ SOFT_BIND
 
-    strfy   : Str -> Str = \s -> close "\"" s ;
-    ssStrfy : SS -> SS = \r -> toSS strfy r ;
+
+    endParen : Str = lSbind ")" ;
+    endBrack : Str = lSbind "]" ;
+    endBrace : Str = lSbind "}" ;
+    endQuote : Str = lSbind "\"" ;
+
+    ssEndParen : SSMap = postfixSS endParen ;
+    ssEndBrack : SSMap = postfixSS endBrack ;
+    ssEndBrace : SSMap = postfixSS endBrace ;
+
+    parens   : StrMap = embed begParen endParen ;
+    bracks   : StrMap = embed begBrack endBrack ;
+    braces   : StrMap = embed begBrace endBrace ;
+
+    ssParens : SSMap = toSS parens ;
+    ssBracks : SSMap = toSS bracks ;
+    ssBraces : SSMap = toSS braces ;
+
+    Rcomma : Str = rSbind "," ;
+
+    strfy   : StrMap = embed begQuote endQuote ;
+    ssStrfy : SSMap = toSS strfy ;
 } ;
