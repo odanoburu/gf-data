@@ -1,34 +1,30 @@
 concrete DataXml of Data = open Prelude, Predef, ResData in {
+  -- I'm using > and </ as delimiters of the string, is this
+  -- necessary? does it improve parsing? (as my intuition tells me)
   lincat
-    S, Value, Tree, Map, List, Pair, Ident = SS ;
+    S, Value, Tree, Map, List, Pair, Ident, Dstr = SS ;
   lin
-    mkV v = ss ("<?xml version=\"1.0\"?>" ++ v ;
-    mkT t = t ;
-    mkM m = ss nonExist ;
-    mkL l = ss nonExist ;
-    consT i m v = let lTag : Str = Langle i.s ;
-                      rTag : Str = LangleEnd (Rangle i.s )
+    mkV v        = ss ("<?xml version=\"1.0\"?>" ++ SOFT_BIND ++ v.s) ;
+    mkT t        = t ;
+    mkM m        = ss nonExist ;
+    mkL l        = l ;
+    mkStr s      = ssEndAngle s ; -- string is delimited by > and </
+    consT i m v  = let lTag : Str = begAngle ++ i.s ;
+                       rTag : Str = begAngleClo ++ i.s ++ endAngle
                    in ss (lTag ++ m.s ++ v.s ++ rTag ) ;
-    consM p m = ss (p.s ++ m.s ) ;
-    consL v l = ss nonExist ;
-    consP i v = ss (i.s ++ "=" ++ (Rangle (strfy v.s ))) ;
-    atomM p   = p ;
-    atomL v = ss nonExist ;
-    mkInt n = n ;
-    mkFloat f = f ;
-    mkString s = ssStrfy s ;
-    mkIdent i = i ;
-    emptyM = ">" ;
-    trueB
-
-  oper
-    Langle    : StrMap = \s -> Lclose "<" s ;
-    LangleEnd : Str Map = \s -> Lclose "</" s ;
-    ssLangle  : SSMap = \r -> toSS Langle r ;
-    
-    Rangle   : StrMap = \s -> Rclose ">" s ;
-    ssRangle : SSMap = \r -> toSS Rangle r ;
-
-    angle : StrMap = \s -> Langle (Rangle s) ;
-    ssAngle : SSMap = \r -> toSS angle r ;
+    consM p m    = cc2 p m ;
+    consL v l    = ss nonExist ;
+    consP i v    = ss (i.s ++ bEqual ++ (strfy v.s )) ;
+    consStr s ds = cc2 s ds ;
+    atomM p      = p ;
+    atomL v      = v ;
+    atomStr s    = ssBegAngleClo s ;
+    mkInt n      = n ;
+    --mkFloat f  = f ;
+    mkIdent i    = i ;
+    emptyM       = ss endAngle ;
+    emptyL       = ss (begAngleClo ++ endAngle) ;
+    trueB        = ss "true" ;
+    falseB       = ss "false" ;
+    nullB        = ss "null" ;
 } ;
